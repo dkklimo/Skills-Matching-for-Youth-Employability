@@ -2,22 +2,28 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraduationCap, Building2, BookOpen, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import heroBg from "@/assets/hero-bg.jpg";
 
 const Landing = () => {
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/5 to-secondary/10"></div>
-        <div className="container relative mx-auto px-4 py-20 md:py-32">
+      {/* Hero Section with Full-Screen Background */}
+      <section className="relative overflow-hidden min-h-screen flex items-center">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${heroBg})` }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-accent/60 to-secondary/70"></div>
+        </div>
+        <div className="container relative mx-auto px-4 py-20 md:py-32 z-10">
           <div className="max-w-3xl mx-auto text-center space-y-6">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white drop-shadow-lg">
               Bridge Skills to{" "}
-              <span className="bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
+              <span className="text-secondary-foreground">
                 Opportunities
               </span>
             </h1>
-            <p className="text-xl text-muted-foreground">
+            <p className="text-xl text-white/90 drop-shadow-md">
               Connect students, educators, and employers to build the workforce of tomorrow
             </p>
             <div className="flex flex-wrap gap-4 justify-center pt-4">
