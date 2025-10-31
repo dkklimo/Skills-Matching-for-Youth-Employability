@@ -17,31 +17,27 @@ export const useAuth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // Fetch roles after auth state changes
-        if (session?.user) {
-          setTimeout(() => {
-            fetchUserRoles(session.user.id);
-          }, 0);
-        } else {
-          setRoles([]);
-        }
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const handleAuthChange = async (session: Session | null) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchUserRoles(session.user.id);
+        await fetchUserRoles(session.user.id);
+      } else {
+        setRoles([]);
       }
       setLoading(false);
+    };
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        handleAuthChange(session);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      handleAuthChange(session);
     });
 
     return () => subscription.unsubscribe();
@@ -56,8 +52,10 @@ export const useAuth = () => {
 
       if (error) throw error;
       setRoles(data as UserRole[]);
+      return data as UserRole[]; // Return roles for immediate use if needed
     } catch (error) {
       console.error('Error fetching roles:', error);
+      return [];
     }
   };
 
@@ -85,13 +83,14 @@ export const useAuth = () => {
       });
 
       return { data, error: null };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = (error instanceof Error) ? error.message : "An unknown error occurred.";
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
-      return { data: null, error };
+      return { data: null, error: new Error(errorMessage) };
     }
   };
 
@@ -110,13 +109,14 @@ export const useAuth = () => {
       });
 
       return { data, error: null };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = (error instanceof Error) ? error.message : "An unknown error occurred.";
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
-      return { data: null, error };
+      return { data: null, error: new Error(errorMessage) };
     }
   };
 
@@ -131,10 +131,11 @@ export const useAuth = () => {
       });
 
       navigate('/landing');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = (error instanceof Error) ? error.message : "An unknown error occurred.";
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     }

@@ -17,7 +17,7 @@ interface UserWithRoles {
 }
 
 const AdminDashboard = () => {
-  const { user, isAdmin, signOut, loading } = useAuth();
+  const { user, isAdmin, signOut, loading, roles } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [users, setUsers] = useState<UserWithRoles[]>([]);
@@ -29,7 +29,7 @@ const AdminDashboard = () => {
   });
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !user && roles.length === 0) {
       navigate("/auth/login");
     } else if (!loading && !isAdmin()) {
       toast({
@@ -42,11 +42,11 @@ const AdminDashboard = () => {
   }, [user, loading, isAdmin, navigate, toast]);
 
   useEffect(() => {
-    if (user && isAdmin()) {
+    if (user && isAdmin() && roles.length > 0) {
       fetchUsers();
       fetchStats();
     }
-  }, [user, isAdmin]);
+  }, [user, isAdmin,roles]);
 
   const fetchUsers = async () => {
     try {
