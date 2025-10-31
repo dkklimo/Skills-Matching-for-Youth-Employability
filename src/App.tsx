@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Landing from "./pages/Landing";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import AdminLogin from "./pages/auth/AdminLogin";
 import StudentDashboard from "./pages/dashboard/StudentDashboard";
 import EducatorDashboard from "./pages/dashboard/EducatorDashboard";
 import EmployerDashboard from "./pages/dashboard/EmployerDashboard";
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/landing" element={<Landing />} />
           <Route path="/auth/login" element={<Login />} />
           <Route path="/auth/register" element={<Register />} />
+          <Route path="/auth/admin-login" element={<AdminLogin />} />
           <Route path="/dashboard/student" element={<StudentDashboard />} />
           <Route path="/dashboard/educator" element={<EducatorDashboard />} />
           <Route path="/dashboard/employer" element={<EmployerDashboard />} />

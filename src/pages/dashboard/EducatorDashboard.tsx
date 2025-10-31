@@ -1,10 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, BookOpen, Video, FileText, TrendingUp, Upload } from "lucide-react";
+import { Users, BookOpen, Video, FileText, TrendingUp, Upload, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const EducatorDashboard = () => {
+  const { signOut } = useAuth();
   const mockStudents = [
     { id: 1, name: "Alice Johnson", course: "Web Development", progress: 75 },
     { id: 2, name: "Bob Smith", course: "Data Science", progress: 60 },
@@ -20,9 +22,15 @@ const EducatorDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-gradient-to-r from-secondary to-accent text-primary-foreground p-6 md:p-8">
-        <div className="container mx-auto">
-          <h1 className="text-3xl font-bold mb-2">Educator Dashboard</h1>
-          <p className="opacity-90">Shape the future workforce</p>
+        <div className="container mx-auto flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Educator Dashboard</h1>
+            <p className="opacity-90">Shape the future workforce</p>
+          </div>
+          <Button variant="outline" onClick={signOut} className="bg-white/10 text-white border-white/20 hover:bg-white/20">
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
         </div>
       </div>
 

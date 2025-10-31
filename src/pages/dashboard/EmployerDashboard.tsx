@@ -1,10 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, Users, Eye, PlusCircle, TrendingUp, Search } from "lucide-react";
+import { Briefcase, Users, Eye, PlusCircle, TrendingUp, Search, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const EmployerDashboard = () => {
+  const { signOut } = useAuth();
   const mockJobs = [
     { id: 1, title: "Senior Developer", applicants: 24, status: "open" },
     { id: 2, title: "Product Manager", applicants: 18, status: "open" },
@@ -20,9 +22,15 @@ const EmployerDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-gradient-to-r from-primary via-accent to-primary text-primary-foreground p-6 md:p-8">
-        <div className="container mx-auto">
-          <h1 className="text-3xl font-bold mb-2">Employer Dashboard</h1>
-          <p className="opacity-90">Find and hire top talent</p>
+        <div className="container mx-auto flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Employer Dashboard</h1>
+            <p className="opacity-90">Find and hire top talent</p>
+          </div>
+          <Button variant="outline" onClick={signOut} className="bg-white/10 text-white border-white/20 hover:bg-white/20">
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
         </div>
       </div>
 
