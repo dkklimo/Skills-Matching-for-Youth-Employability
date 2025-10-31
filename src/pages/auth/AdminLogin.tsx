@@ -11,24 +11,22 @@ const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, user, isAdmin } = useAuth();
+  const { signIn, user, isAdmin, roles } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user && isAdmin()) {
+    // Only navigate when user is authenticated and roles are loaded
+    if (user && roles.length > 0 && isAdmin()) {
       navigate('/dashboard/admin');
     }
-  }, [user, navigate, isAdmin]);
+  }, [user, roles, navigate, isAdmin]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await signIn(email, password);
-
-    if (!error && isAdmin()) {
-      navigate('/dashboard/admin');
-    }
+    await signIn(email, password);
+    // Navigation will happen via the useEffect once roles are loaded
 
     setLoading(false);
   };
