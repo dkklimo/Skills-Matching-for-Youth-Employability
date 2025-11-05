@@ -1,23 +1,137 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Users, BookOpen, Video, FileText, TrendingUp, Upload, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface StudentActivity {
+  id: string;
+  name: string;
+  course: string;
+  progress: number;
+}
+
+interface Course {
+  id: string;
+  title: string;
+  students: number;
+  rating: number;
+}
 
 const EducatorDashboard = () => {
-  const { signOut } = useAuth();
-  const mockStudents = [
-    { id: 1, name: "Alice Johnson", course: "Web Development", progress: 75 },
-    { id: 2, name: "Bob Smith", course: "Data Science", progress: 60 },
-    { id: 3, name: "Carol Davis", course: "UX Design", progress: 85 },
-  ];
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
+  const [students, setStudents] = useState<StudentActivity[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    activeCourses: 0,
+    videoLectures: 0,
+    avgRating: 0,
+  });
+  const [loading, setLoading] = useState(true);
 
-  const mockCourses = [
-    { id: 1, title: "Introduction to React", students: 45, rating: 4.8 },
-    { id: 2, title: "Python Fundamentals", students: 67, rating: 4.9 },
-    { id: 3, title: "Data Structures", students: 32, rating: 4.7 },
-  ];
+  useEffect(() => {
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user]);
+
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch educator's courses
+      const { data: coursesData } = await supabase
+        .from('courses')
+        .select(`
+          id,
+          title,
+          rating,
+          total_students,
+          status
+        `)
+        .eq('educator_id', user?.id)
+        .eq('status', 'published')
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      // Fetch active courses count
+      const { count: activeCourses } = await supabase
+        .from('courses')
+        .select('*', { count: 'exact', head: true })
+        .eq('educator_id', user?.id)
+        .eq('status', 'published');
+
+      // Fetch recent student activity
+      const { data: enrollmentsData } = await supabase
+        .from('course_enrollments')
+        .select('user_id, progress, courses!inner(title, educator_id)')
+        .eq('courses.educator_id', user?.id)
+        .order('enrolled_at', { ascending: false })
+        .limit(3);
+
+      // Fetch profiles for enrolled students
+      let formattedStudents: StudentActivity[] = [];
+      if (enrollmentsData && enrollmentsData.length > 0) {
+        const userIds = enrollmentsData.map(e => e.user_id);
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', userIds);
+
+        formattedStudents = enrollmentsData.map(enrollment => {
+          const profile = profilesData?.find(p => p.id === enrollment.user_id);
+          return {
+            id: enrollment.user_id,
+            name: profile?.full_name || 'Unknown',
+            course: enrollment.courses.title,
+            progress: enrollment.progress,
+          };
+        });
+      }
+
+      // Calculate total unique students
+      const { data: allEnrollments } = await supabase
+        .from('course_enrollments')
+        .select('user_id, courses!inner(educator_id)')
+        .eq('courses.educator_id', user?.id);
+
+      const uniqueStudents = new Set(allEnrollments?.map(e => e.user_id)).size;
+
+      // Calculate average rating
+      const avgRating = coursesData?.length
+        ? coursesData.reduce((sum, c) => sum + (c.rating || 0), 0) / coursesData.length
+        : 0;
+
+      const formattedCourses = coursesData?.map(course => ({
+        id: course.id,
+        title: course.title,
+        students: course.total_students || 0,
+        rating: course.rating || 0,
+      })) || [];
+
+      setStudents(formattedStudents);
+      setCourses(formattedCourses);
+      setStats({
+        totalStudents: uniqueStudents,
+        activeCourses: activeCourses || 0,
+        videoLectures: 0, // TODO: Implement video lectures tracking
+        avgRating: Number(avgRating.toFixed(1)),
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -45,7 +159,7 @@ const EducatorDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">144</div>
+              <div className="text-2xl font-bold">{loading ? "..." : stats.totalStudents}</div>
             </CardContent>
           </Card>
           <Card>
@@ -56,7 +170,7 @@ const EducatorDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">8</div>
+              <div className="text-2xl font-bold">{loading ? "..." : stats.activeCourses}</div>
             </CardContent>
           </Card>
           <Card>
@@ -67,7 +181,7 @@ const EducatorDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">32</div>
+              <div className="text-2xl font-bold">{loading ? "..." : stats.videoLectures}</div>
             </CardContent>
           </Card>
           <Card>
@@ -78,7 +192,7 @@ const EducatorDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">4.8</div>
+              <div className="text-2xl font-bold">{loading ? "..." : stats.avgRating}</div>
             </CardContent>
           </Card>
         </div>
@@ -91,17 +205,23 @@ const EducatorDashboard = () => {
               <CardDescription>Monitor student progress</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {mockStudents.map((student) => (
-                <div key={student.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex-1">
-                    <h4 className="font-medium">{student.name}</h4>
-                    <p className="text-sm text-muted-foreground">{student.course}</p>
+              {loading ? (
+                <p className="text-center text-muted-foreground">Loading...</p>
+              ) : students.length === 0 ? (
+                <p className="text-center text-muted-foreground">No student activity yet</p>
+              ) : (
+                students.map((student) => (
+                  <div key={student.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex-1">
+                      <h4 className="font-medium">{student.name}</h4>
+                      <p className="text-sm text-muted-foreground">{student.course}</p>
+                    </div>
+                    <Badge variant={student.progress >= 75 ? "default" : "secondary"}>
+                      {student.progress}%
+                    </Badge>
                   </div>
-                  <Badge variant={student.progress >= 75 ? "default" : "secondary"}>
-                    {student.progress}%
-                  </Badge>
-                </div>
-              ))}
+                ))
+              )}
               <Button asChild variant="outline" className="w-full">
                 <Link to="/students">View All Students</Link>
               </Button>
@@ -115,15 +235,21 @@ const EducatorDashboard = () => {
               <CardDescription>Manage your teaching materials</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {mockCourses.map((course) => (
-                <div key={course.id} className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <h4 className="font-medium mb-2">{course.title}</h4>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{course.students} students</span>
-                    <span>★ {course.rating}</span>
+              {loading ? (
+                <p className="text-center text-muted-foreground">Loading...</p>
+              ) : courses.length === 0 ? (
+                <p className="text-center text-muted-foreground">No courses created yet</p>
+              ) : (
+                courses.map((course) => (
+                  <div key={course.id} className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <h4 className="font-medium mb-2">{course.title}</h4>
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                      <span>{course.students} students</span>
+                      <span>★ {course.rating}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
               <Button asChild className="w-full">
                 <Link to="/courses/new">Create New Course</Link>
               </Button>

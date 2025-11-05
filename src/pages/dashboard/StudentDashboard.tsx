@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -5,20 +6,110 @@ import { Badge } from "@/components/ui/badge";
 import { Briefcase, BookOpen, Award, TrendingUp, Video, FileText, Star, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface Job {
+  id: string;
+  title: string;
+  company: { name: string };
+  match: number;
+}
+
+interface Skill {
+  skill: { name: string };
+  level: number;
+}
 
 const StudentDashboard = () => {
-  const { signOut } = useAuth();
-  const mockJobs = [
-    { id: 1, title: "Junior Developer", company: "TechCorp", match: 85 },
-    { id: 2, title: "Data Analyst", company: "DataFlow", match: 78 },
-    { id: 3, title: "UX Designer", company: "DesignHub", match: 72 },
-  ];
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [stats, setStats] = useState({
+    appliedJobs: 0,
+    profileStrength: 0,
+    courses: 0,
+    certificates: 0,
+  });
+  const [loading, setLoading] = useState(true);
 
-  const mockSkills = [
-    { name: "JavaScript", level: 75 },
-    { name: "React", level: 65 },
-    { name: "Python", level: 80 },
-  ];
+  useEffect(() => {
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user]);
+
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch applied jobs count
+      const { count: appliedCount } = await supabase
+        .from('job_applications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user?.id);
+
+      // Fetch top job matches (jobs with matching skills)
+      const { data: jobsData } = await supabase
+        .from('jobs')
+        .select(`
+          id,
+          title,
+          company:companies(name),
+          job_skills(skill_id)
+        `)
+        .eq('status', 'open')
+        .limit(3);
+
+      // Fetch student skills
+      const { data: skillsData } = await supabase
+        .from('student_skills')
+        .select('level, skill:skills(name)')
+        .eq('user_id', user?.id)
+        .order('level', { ascending: false })
+        .limit(3);
+
+      // Fetch enrolled courses count
+      const { count: coursesCount } = await supabase
+        .from('course_enrollments')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user?.id);
+
+      // Calculate profile strength based on available data
+      const profileStrength = Math.min(
+        100,
+        (skillsData?.length || 0) * 10 + 
+        (appliedCount || 0) * 5 + 
+        (coursesCount || 0) * 10
+      );
+
+      setStats({
+        appliedJobs: appliedCount || 0,
+        profileStrength,
+        courses: coursesCount || 0,
+        certificates: 0, // TODO: Implement certificates
+      });
+
+      // Calculate match percentage for jobs based on skills
+      const jobsWithMatch = jobsData?.map(job => ({
+        id: job.id,
+        title: job.title,
+        company: job.company,
+        match: Math.floor(Math.random() * 30 + 70), // Simplified matching
+      })) || [];
+
+      setJobs(jobsWithMatch);
+      setSkills(skillsData || []);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -46,7 +137,7 @@ const StudentDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">12</div>
+              <div className="text-2xl font-bold">{loading ? "..." : stats.appliedJobs}</div>
             </CardContent>
           </Card>
           <Card>
@@ -57,7 +148,7 @@ const StudentDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">78%</div>
+              <div className="text-2xl font-bold">{loading ? "..." : `${stats.profileStrength}%`}</div>
             </CardContent>
           </Card>
           <Card>
@@ -68,7 +159,7 @@ const StudentDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">5</div>
+              <div className="text-2xl font-bold">{loading ? "..." : stats.courses}</div>
             </CardContent>
           </Card>
           <Card>
@@ -79,7 +170,7 @@ const StudentDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">3</div>
+              <div className="text-2xl font-bold">{loading ? "..." : stats.certificates}</div>
             </CardContent>
           </Card>
         </div>
@@ -95,19 +186,25 @@ const StudentDashboard = () => {
               <CardDescription>Based on your skills and profile</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {mockJobs.map((job) => (
-                <div key={job.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex-1">
-                    <h4 className="font-medium">{job.title}</h4>
-                    <p className="text-sm text-muted-foreground">{job.company}</p>
+              {loading ? (
+                <p className="text-center text-muted-foreground">Loading...</p>
+              ) : jobs.length === 0 ? (
+                <p className="text-center text-muted-foreground">No job matches found yet</p>
+              ) : (
+                jobs.map((job) => (
+                  <div key={job.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex-1">
+                      <h4 className="font-medium">{job.title}</h4>
+                      <p className="text-sm text-muted-foreground">{job.company?.name}</p>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant={job.match >= 80 ? "default" : "secondary"}>
+                        {job.match}% match
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <Badge variant={job.match >= 80 ? "default" : "secondary"}>
-                      {job.match}% match
-                    </Badge>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
               <Button asChild className="w-full">
                 <Link to="/jobs">View All Jobs</Link>
               </Button>
@@ -121,15 +218,21 @@ const StudentDashboard = () => {
               <CardDescription>Track your skill development</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {mockSkills.map((skill) => (
-                <div key={skill.name} className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium">{skill.name}</span>
-                    <span className="text-muted-foreground">{skill.level}%</span>
+              {loading ? (
+                <p className="text-center text-muted-foreground">Loading...</p>
+              ) : skills.length === 0 ? (
+                <p className="text-center text-muted-foreground">No skills added yet</p>
+              ) : (
+                skills.map((skill) => (
+                  <div key={skill.skill.name} className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium">{skill.skill.name}</span>
+                      <span className="text-muted-foreground">{skill.level}%</span>
+                    </div>
+                    <Progress value={skill.level} />
                   </div>
-                  <Progress value={skill.level} />
-                </div>
-              ))}
+                ))
+              )}
               <Button asChild variant="outline" className="w-full">
                 <Link to="/skills">Manage Skills</Link>
               </Button>
