@@ -1,18 +1,25 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Users, Briefcase, BookOpen, LogOut } from "lucide-react";
+import { Shield, Users, Briefcase, BookOpen, LogOut, TrendingUp, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { AdminAnalyticsChart } from "@/components/admin/AdminAnalyticsChart";
+import { AdminUserManagement } from "@/components/admin/AdminUserManagement";
+import { AdminJobManagement } from "@/components/admin/AdminJobManagement";
+import { AdminEmployerOversight } from "@/components/admin/AdminEmployerOversight";
+import { AdminEducatorOversight } from "@/components/admin/AdminEducatorOversight";
+import { AdminNotifications } from "@/components/admin/AdminNotifications";
 
 interface UserWithRoles {
   id: string;
   email: string;
   full_name: string;
   created_at: string;
+  status: string;
   roles: string[];
 }
 
@@ -26,6 +33,8 @@ const AdminDashboard = () => {
     students: 0,
     educators: 0,
     employers: 0,
+    activeJobs: 0,
+    totalApplications: 0,
   });
 
   useEffect(() => {
@@ -68,6 +77,7 @@ const AdminDashboard = () => {
         email: profile.email,
         full_name: profile.full_name,
         created_at: profile.created_at,
+        status: profile.status || 'active',
         roles: rolesData?.filter(r => r.user_id === profile.id).map(r => r.role) || [],
       })) || [];
 
@@ -96,11 +106,22 @@ const AdminDashboard = () => {
 
       if (rolesError) throw rolesError;
 
+      const { count: jobCount } = await supabase
+        .from("jobs")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "open");
+
+      const { count: appCount } = await supabase
+        .from("job_applications")
+        .select("*", { count: "exact", head: true });
+
       const stats = {
         totalUsers: profiles?.length || 0,
         students: roles?.filter(r => r.role === "student").length || 0,
         educators: roles?.filter(r => r.role === "educator").length || 0,
         employers: roles?.filter(r => r.role === "employer").length || 0,
+        activeJobs: jobCount || 0,
+        totalApplications: appCount || 0,
       };
 
       setStats(stats);
@@ -137,7 +158,7 @@ const AdminDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
+        <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -145,7 +166,7 @@ const AdminDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{stats.totalUsers}</div>
+              <div className="text-2xl font-bold">{stats.totalUsers}</div>
             </CardContent>
           </Card>
 
@@ -157,7 +178,7 @@ const AdminDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{stats.students}</div>
+              <div className="text-2xl font-bold">{stats.students}</div>
             </CardContent>
           </Card>
 
@@ -169,7 +190,7 @@ const AdminDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{stats.educators}</div>
+              <div className="text-2xl font-bold">{stats.educators}</div>
             </CardContent>
           </Card>
 
@@ -181,111 +202,69 @@ const AdminDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{stats.employers}</div>
+              <div className="text-2xl font-bold">{stats.employers}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <TrendingUp className="w-4 h-4" />
+                Active Jobs
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.activeJobs}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Applications
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalApplications}</div>
             </CardContent>
           </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>User Management</CardTitle>
-            <CardDescription>Manage all platform users and their roles</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="all">
-              <TabsList>
-                <TabsTrigger value="all">All Users</TabsTrigger>
-                <TabsTrigger value="students">Students</TabsTrigger>
-                <TabsTrigger value="educators">Educators</TabsTrigger>
-                <TabsTrigger value="employers">Employers</TabsTrigger>
-              </TabsList>
+        <Tabs defaultValue="analytics" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="jobs">Jobs</TabsTrigger>
+            <TabsTrigger value="employers">Employers</TabsTrigger>
+            <TabsTrigger value="educators">Educators</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          </TabsList>
 
-              <TabsContent value="all" className="space-y-4">
-                {users.map((user) => (
-                  <div
-                    key={user.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium">{user.full_name}</p>
-                      <p className="text-sm text-muted-foreground">{user.email}</p>
-                      <div className="flex gap-2 mt-1">
-                        {user.roles.map((role) => (
-                          <span
-                            key={role}
-                            className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary"
-                          >
-                            {role}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(user.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                ))}
-              </TabsContent>
+          <TabsContent value="analytics">
+            <AdminAnalyticsChart />
+          </TabsContent>
 
-              <TabsContent value="students" className="space-y-4">
-                {users
-                  .filter((u) => u.roles.includes("student"))
-                  .map((user) => (
-                    <div
-                      key={user.id}
-                      className="flex items-center justify-between p-4 border rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium">{user.full_name}</p>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(user.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
-              </TabsContent>
+          <TabsContent value="users">
+            <AdminUserManagement users={users} onRefresh={fetchUsers} />
+          </TabsContent>
 
-              <TabsContent value="educators" className="space-y-4">
-                {users
-                  .filter((u) => u.roles.includes("educator"))
-                  .map((user) => (
-                    <div
-                      key={user.id}
-                      className="flex items-center justify-between p-4 border rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium">{user.full_name}</p>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(user.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
-              </TabsContent>
+          <TabsContent value="jobs">
+            <AdminJobManagement />
+          </TabsContent>
 
-              <TabsContent value="employers" className="space-y-4">
-                {users
-                  .filter((u) => u.roles.includes("employer"))
-                  .map((user) => (
-                    <div
-                      key={user.id}
-                      className="flex items-center justify-between p-4 border rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium">{user.full_name}</p>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(user.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+          <TabsContent value="employers">
+            <AdminEmployerOversight />
+          </TabsContent>
+
+          <TabsContent value="educators">
+            <AdminEducatorOversight />
+          </TabsContent>
+
+          <TabsContent value="notifications">
+            <AdminNotifications />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

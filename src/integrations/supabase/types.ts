@@ -16,11 +16,13 @@ export type Database = {
     Tables: {
       companies: {
         Row: {
+          approval_status: string | null
           created_at: string
           description: string | null
           employer_id: string
           id: string
           industry: string | null
+          job_count: number | null
           location: string | null
           logo_url: string | null
           name: string
@@ -29,11 +31,13 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          approval_status?: string | null
           created_at?: string
           description?: string | null
           employer_id: string
           id?: string
           industry?: string | null
+          job_count?: number | null
           location?: string | null
           logo_url?: string | null
           name: string
@@ -42,11 +46,13 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          approval_status?: string | null
           created_at?: string
           description?: string | null
           employer_id?: string
           id?: string
           industry?: string | null
+          job_count?: number | null
           location?: string | null
           logo_url?: string | null
           name?: string
@@ -93,6 +99,7 @@ export type Database = {
       }
       courses: {
         Row: {
+          approval_status: string | null
           created_at: string
           description: string | null
           educator_id: string
@@ -105,6 +112,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          approval_status?: string | null
           created_at?: string
           description?: string | null
           educator_id: string
@@ -117,6 +125,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          approval_status?: string | null
           created_at?: string
           description?: string | null
           educator_id?: string
@@ -251,12 +260,40 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          message: string
+          recipient_role: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          message: string
+          recipient_role?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          message?: string
+          recipient_role?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
           email: string
           full_name: string
           id: string
+          status: string | null
           updated_at: string
         }
         Insert: {
@@ -264,6 +301,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          status?: string | null
           updated_at?: string
         }
         Update: {
@@ -271,6 +309,7 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          status?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -331,6 +370,27 @@ export type Database = {
           },
         ]
       }
+      user_analytics: {
+        Row: {
+          count: number | null
+          date: string
+          id: string
+          role: string
+        }
+        Insert: {
+          count?: number | null
+          date: string
+          id?: string
+          role: string
+        }
+        Update: {
+          count?: number | null
+          date?: string
+          id?: string
+          role?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -357,6 +417,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      aggregate_user_registrations: { Args: never; Returns: undefined }
       get_user_roles: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"][]
