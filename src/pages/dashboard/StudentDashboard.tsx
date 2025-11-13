@@ -3,11 +3,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, BookOpen, Award, TrendingUp, Video, FileText, Star, LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Briefcase, BookOpen, Award, TrendingUp, Video, FileText, Star, LogOut, Brain, GraduationCap } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ManageSkillsDialog } from "@/components/student/ManageSkillsDialog";
+import { VideoIntroUpload } from "@/components/student/VideoIntroUpload";
+import { ResumeUpload } from "@/components/student/ResumeUpload";
+import { CareerGuidance } from "@/components/student/CareerGuidance";
 
 interface Job {
   id: string;
@@ -79,12 +83,27 @@ const StudentDashboard = () => {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user?.id);
 
+      // Fetch profile data (video intro and resume URLs)
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('video_intro_url, resume_url, resume_updated_at')
+        .eq('id', user?.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching profile data:', profileError);
+      } else {
+        setProfile(profileData);
+      }
+
       // Calculate profile strength based on available data
       const profileStrength = Math.min(
         100,
         (skillsData?.length || 0) * 10 + 
         (appliedCount || 0) * 5 + 
-        (coursesCount || 0) * 10
+        (coursesCount || 0) * 10 +
+        (profileData?.video_intro_url ? 20 : 0) +
+        (profileData?.resume_url ? 20 : 0)
       );
 
       setStats({
@@ -180,100 +199,133 @@ const StudentDashboard = () => {
           </Card>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Matched Jobs */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                Top Job Matches
-              </CardTitle>
-              <CardDescription>Based on your skills and profile</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {loading ? (
-                <p className="text-center text-muted-foreground">Loading...</p>
-              ) : jobs.length === 0 ? (
-                <p className="text-center text-muted-foreground">No job matches found yet</p>
-              ) : (
-                jobs.map((job) => (
-                  <div key={job.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex-1">
-                      <h4 className="font-medium">{job.title}</h4>
-                      <p className="text-sm text-muted-foreground">{job.company?.name}</p>
-                    </div>
-                    <div className="text-right">
-                      <Badge variant={job.match >= 80 ? "default" : "secondary"}>
-                        {job.match}% match
-                      </Badge>
-                    </div>
-                  </div>
-                ))
-              )}
-              <Button asChild className="w-full">
-                <Link to="/jobs">View All Jobs</Link>
-              </Button>
-            </CardContent>
-          </Card>
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="skills">Skills</TabsTrigger>
+            <TabsTrigger value="video">Video Intro</TabsTrigger>
+            <TabsTrigger value="resume">Resume</TabsTrigger>
+            <TabsTrigger value="career">Career Guidance</TabsTrigger>
+          </TabsList>
+          <TabsContent value="overview" className="space-y-6 mt-6">
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Matched Jobs */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5" />
+                    Top Job Matches
+                  </CardTitle>
+                  <CardDescription>Based on your skills and profile</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {loading ? (
+                    <p className="text-center text-muted-foreground">Loading...</p>
+                  ) : jobs.length === 0 ? (
+                    <p className="text-center text-muted-foreground">No job matches found yet</p>
+                  ) : (
+                    jobs.map((job) => (
+                      <div key={job.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex-1">
+                          <h4 className="font-medium">{job.title}</h4>
+                          <p className="text-sm text-muted-foreground">{job.company?.name}</p>
+                        </div>
+                        <div className="text-right">
+                          <Badge variant={job.match >= 80 ? "default" : "secondary"}>
+                            {job.match}% match
+                          </Badge>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                  <Button className="w-full">View All Jobs</Button>
+                </CardContent>
+              </Card>
 
-          {/* Skills Progress */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Skills</CardTitle>
-              <CardDescription>Track your skill development</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {loading ? (
-                <p className="text-center text-muted-foreground">Loading...</p>
-              ) : skills.length === 0 ? (
-                <p className="text-center text-muted-foreground">No skills added yet</p>
-              ) : (
-                skills.map((skill) => (
-                  <div key={skill.skill.name} className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="font-medium">{skill.skill.name}</span>
-                      <span className="text-muted-foreground">{skill.level}%</span>
-                    </div>
-                    <Progress value={skill.level} />
-                  </div>
-                ))
-              )}
-              <Button asChild variant="outline" className="w-full">
-                <Link to="/skills">Manage Skills</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Complete your profile and boost your visibility</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-3 gap-4">
-              <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-                <Link to="/profile/video">
-                  <Video className="w-6 h-6" />
-                  <span>Upload Video Intro</span>
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-                <Link to="/profile/documents">
-                  <FileText className="w-6 h-6" />
-                  <span>Update Resume</span>
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-                <Link to="/career-guidance">
-                  <BookOpen className="w-6 h-6" />
-                  <span>Career Guidance</span>
-                </Link>
-              </Button>
+              {/* Skills Progress */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Skills</CardTitle>
+                  <CardDescription>Track your skill development</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {loading ? (
+                    <p className="text-center text-muted-foreground">Loading...</p>
+                  ) : skills.length === 0 ? (
+                    <p className="text-center text-muted-foreground">No skills added yet</p>
+                  ) : (
+                    skills.map((skill) => (
+                      <div key={skill.skill.name} className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="font-medium">{skill.skill.name}</span>
+                          <span className="text-muted-foreground">{skill.level}%</span>
+                        </div>
+                        <Progress value={skill.level} />
+                      </div>
+                    ))
+                  )}
+                  <ManageSkillsDialog userId={user?.id} onUpdate={fetchDashboardData} />
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
+          </TabsContent>
+          <TabsContent value="skills" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="w-5 h-5" />
+                  Skills Management
+                </CardTitle>
+                <CardDescription>Add, edit, and track your skills and proficiency levels.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ManageSkillsDialog userId={user?.id} onUpdate={fetchDashboardData} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="video" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Video className="w-5 h-5" />
+                  Video Introduction
+                </CardTitle>
+                <CardDescription>Upload a 30-90 second video introduction to showcase yourself to employers.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <VideoIntroUpload userId={user?.id} videoUrl={profile?.video_intro_url} onUpdate={fetchDashboardData} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="resume" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Resume Upload
+                </CardTitle>
+                <CardDescription>Upload or update your resume (PDF, DOCX) for job applications.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResumeUpload userId={user?.id} resumeUrl={profile?.resume_url} resumeUpdatedAt={profile?.resume_updated_at} onUpdate={fetchDashboardData} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="career" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <GraduationCap className="w-5 h-5" />
+                  Career Guidance
+                </CardTitle>
+                <CardDescription>Explore recommended career paths, identify skill gaps, and find learning resources.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CareerGuidance userId={user?.id} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
