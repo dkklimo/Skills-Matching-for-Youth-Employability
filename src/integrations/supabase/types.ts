@@ -293,24 +293,33 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          resume_updated_at: string | null
+          resume_url: string | null
           status: string | null
           updated_at: string
+          video_intro_url: string | null
         }
         Insert: {
           created_at?: string
           email: string
           full_name: string
           id: string
+          resume_updated_at?: string | null
+          resume_url?: string | null
           status?: string | null
           updated_at?: string
+          video_intro_url?: string | null
         }
         Update: {
           created_at?: string
           email?: string
           full_name?: string
           id?: string
+          resume_updated_at?: string | null
+          resume_url?: string | null
           status?: string | null
           updated_at?: string
+          video_intro_url?: string | null
         }
         Relationships: []
       }

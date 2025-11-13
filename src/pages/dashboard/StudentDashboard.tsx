@@ -32,6 +32,11 @@ const StudentDashboard = () => {
     courses: 0,
     certificates: 0,
   });
+  const [profile, setProfile] = useState<{
+    video_intro_url: string | null;
+    resume_url: string | null;
+    resume_updated_at: string | null;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
