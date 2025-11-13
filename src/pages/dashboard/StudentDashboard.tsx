@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Briefcase, BookOpen, Award, TrendingUp, Video, FileText, Star, LogOut, Brain, GraduationCap } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -200,7 +201,7 @@ const StudentDashboard = () => {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="skills">Skills</TabsTrigger>
             <TabsTrigger value="video">Video Intro</TabsTrigger>
@@ -238,7 +239,9 @@ const StudentDashboard = () => {
                       </div>
                     ))
                   )}
-                  <Button className="w-full">View All Jobs</Button>
+                  <Button asChild className="w-full">
+                    <Link to="/jobs">View All Jobs</Link>
+                  </Button>
                 </CardContent>
               </Card>
 

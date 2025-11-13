@@ -2,11 +2,16 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, Users, Eye, PlusCircle, TrendingUp, Search, LogOut } from "lucide-react";
+import { Briefcase, Users, Eye, PlusCircle, TrendingUp, Search, LogOut, Building2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import PostNewJob from "@/pages/dashboard/employer/PostNewJob";
+import SearchCandidates from "@/pages/dashboard/employer/SearchCandidates";
+import AllCandidates from "@/pages/dashboard/employer/AllCandidates";
+import UpdateCompanyProfile from "@/pages/dashboard/employer/UpdateCompanyProfile";
 
 interface JobWithApplicants {
   id: string;
@@ -202,100 +207,93 @@ const EmployerDashboard = () => {
           </Card>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Active Jobs */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Job Postings</CardTitle>
-              <CardDescription>Manage your open positions</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {loading ? (
-                <p className="text-center text-muted-foreground">Loading...</p>
-              ) : jobs.length === 0 ? (
-                <p className="text-center text-muted-foreground">No jobs posted yet</p>
-              ) : (
-                jobs.map((job) => (
-                  <div key={job.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex-1">
-                      <h4 className="font-medium">{job.title}</h4>
-                      <p className="text-sm text-muted-foreground">{job.applicants} applicants</p>
-                    </div>
-                    <Badge variant={job.status === "open" ? "default" : "secondary"}>
-                      {job.status}
-                    </Badge>
-                  </div>
-                ))
-              )}
-              <Button asChild className="w-full">
-                <Link to="/jobs/post">
-                  <PlusCircle className="w-4 h-4 mr-2" />
-                  Post New Job
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="post-job">Post Job</TabsTrigger>
+            <TabsTrigger value="search-candidates">Search Candidates</TabsTrigger>
+            <TabsTrigger value="all-candidates">All Candidates</TabsTrigger>
+            <TabsTrigger value="company-profile">Company Profile</TabsTrigger>
+          </TabsList>
+          <TabsContent value="overview" className="space-y-6 mt-6">
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Active Jobs */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Job Postings</CardTitle>
+                  <CardDescription>Manage your open positions</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {loading ? (
+                    <p className="text-center text-muted-foreground">Loading...</p>
+                  ) : jobs.length === 0 ? (
+                    <p className="text-center text-muted-foreground">No jobs posted yet</p>
+                  ) : (
+                    jobs.map((job) => (
+                      <div key={job.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex-1">
+                          <h4 className="font-medium">{job.title}</h4>
+                          <p className="text-sm text-muted-foreground">{job.applicants} applicants</p>
+                        </div>
+                        <Badge variant={job.status === "open" ? "default" : "secondary"}>
+                          {job.status}
+                        </Badge>
+                      </div>
+                    ))
+                  )}
+                  <Button asChild className="w-full">
+                    <Link to="/jobs/post">
+                      <PlusCircle className="w-4 h-4 mr-2" />
+                      Post New Job
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
 
-          {/* Top Candidates */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Top Matched Candidates</CardTitle>
-              <CardDescription>Candidates matching your requirements</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {loading ? (
-                <p className="text-center text-muted-foreground">Loading...</p>
-              ) : candidates.length === 0 ? (
-                <p className="text-center text-muted-foreground">No candidates yet</p>
-              ) : (
-                candidates.map((candidate) => (
-                  <div key={candidate.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex-1">
-                      <h4 className="font-medium">{candidate.name}</h4>
-                      <p className="text-sm text-muted-foreground">{candidate.position}</p>
-                    </div>
-                    <Badge variant={candidate.match >= 90 ? "default" : "secondary"}>
-                      {candidate.match}%
-                    </Badge>
-                  </div>
-                ))
-              )}
-              <Button asChild variant="outline" className="w-full">
-                <Link to="/candidates">View All Candidates</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Manage your hiring process</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-3 gap-4">
-              <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-                <Link to="/jobs/post">
-                  <PlusCircle className="w-6 h-6" />
-                  <span>Post New Job</span>
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-                <Link to="/candidates/search">
-                  <Search className="w-6 h-6" />
-                  <span>Search Candidates</span>
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-                <Link to="/company/profile">
-                  <Briefcase className="w-6 h-6" />
-                  <span>Update Company Profile</span>
-                </Link>
-              </Button>
+              {/* Top Candidates */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Top Matched Candidates</CardTitle>
+                  <CardDescription>Candidates matching your requirements</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {loading ? (
+                    <p className="text-center text-muted-foreground">Loading...</p>
+                  ) : candidates.length === 0 ? (
+                    <p className="text-center text-muted-foreground">No candidates yet</p>
+                  ) : (
+                    candidates.map((candidate) => (
+                      <div key={candidate.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex-1">
+                          <h4 className="font-medium">{candidate.name}</h4>
+                          <p className="text-sm text-muted-foreground">{candidate.position}</p>
+                        </div>
+                        <Badge variant={candidate.match >= 90 ? "default" : "secondary"}>
+                          {candidate.match}%
+                        </Badge>
+                      </div>
+                    ))
+                  )}
+                  <Button asChild variant="outline" className="w-full">
+                    <Link to="/candidates">View All Candidates</Link>
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
+          </TabsContent>
+          <TabsContent value="post-job" className="mt-6">
+            <PostNewJob />
+          </TabsContent>
+          <TabsContent value="search-candidates" className="mt-6">
+            <SearchCandidates />
+          </TabsContent>
+          <TabsContent value="all-candidates" className="mt-6">
+            <AllCandidates />
+          </TabsContent>
+          <TabsContent value="company-profile" className="mt-6">
+            <UpdateCompanyProfile />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
