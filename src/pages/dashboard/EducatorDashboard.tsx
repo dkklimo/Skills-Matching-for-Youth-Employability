@@ -7,6 +7,10 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { CreateCourseDialog } from "@/components/educator/CreateCourseDialog";
+import { UploadVideoLectureDialog } from "@/components/educator/UploadVideoLectureDialog";
+import { UploadMaterialsDialog } from "@/components/educator/UploadMaterialsDialog";
+import { MapSkillsToJobsDialog } from "@/components/educator/MapSkillsToJobsDialog";
 
 interface StudentActivity {
   id: string;
@@ -34,6 +38,10 @@ const EducatorDashboard = () => {
     avgRating: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [createCourseOpen, setCreateCourseOpen] = useState(false);
+  const [uploadVideoOpen, setUploadVideoOpen] = useState(false);
+  const [uploadMaterialsOpen, setUploadMaterialsOpen] = useState(false);
+  const [mapSkillsOpen, setMapSkillsOpen] = useState(false);
 
   useEffect(() => {
     if (user) {

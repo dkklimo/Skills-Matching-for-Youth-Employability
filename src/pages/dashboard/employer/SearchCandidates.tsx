@@ -73,10 +73,10 @@ const SearchCandidates = () => {
         query = query.ilike("location", `%${filters.location}%`);
       }
       if (filters.education) {
-        query = query.eq("education_level", filters.education);
+        query = query.eq("education_level", filters.education as any);
       }
       if (filters.experience) {
-        query = query.gte("experience_years", parseInt(filters.experience));
+        query = query.gte("experience_years", parseInt(filters.experience) as any);
       }
 
       const { data, error } = await query;
