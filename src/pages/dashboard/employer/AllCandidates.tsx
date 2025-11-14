@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface Application {
   id: string;
-  created_at: string;
+  applied_at: string; // Changed from created_at to applied_at
   status: string;
   profiles: {
     full_name: string;
@@ -61,25 +61,62 @@ const AllCandidates = () => {
       const startIndex = (page - 1) * ITEMS_PER_PAGE;
       const endIndex = startIndex + ITEMS_PER_PAGE - 1;
 
-      const { data, error, count } = await supabase
+      type RawApplication = {
+        id: string;
+        applied_at: string; // Changed from created_at to applied_at
+        status: string;
+        user_id: string;
+        jobs: { title: string } | null;
+      };
+
+      const { data: applicationsRawData, error: applicationsError, count } = await supabase
         .from("job_applications")
         .select(
           `
             id,
-            created_at,
+            applied_at,
             status,
-            profiles(full_name, email),
-            jobs(title, company_id)
+            user_id,
+            jobs!inner(title)
           `,
           { count: "exact" }
-        )
-        .eq("jobs.company_id", companyData.id)
-        .order("created_at", { ascending: false })
-        .range(startIndex, endIndex);
+        );
 
-      if (error) throw error;
+      if (applicationsError) throw applicationsError;
 
-      setApplications(data as Application[] || []);
+      const applicationsData: RawApplication[] = applicationsRawData || [];
+
+      if (applicationsData.length === 0) {
+        setApplications([]);
+        setTotalApplications(count || 0);
+        setLoading(false);
+        return;
+      }
+
+      const userIds = applicationsData.map(app => app.user_id);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      const profilesMap = new Map(profilesData?.map(profile => [profile.id, profile]) || []);
+
+      const formattedApplications: Application[] = applicationsData.map(app => ({
+        id: app.id,
+        applied_at: app.applied_at, // Changed from created_at to applied_at
+        status: app.status,
+        profiles: {
+          full_name: profilesMap.get(app.user_id)?.full_name || "N/A",
+          email: profilesMap.get(app.user_id)?.email || "N/A",
+        },
+        jobs: {
+          title: app.jobs?.title || "N/A",
+        },
+      }));
+
+      setApplications(formattedApplications);
       setTotalApplications(count || 0);
     } catch (error) {
       console.error("Error fetching applications:", error);
@@ -141,7 +178,7 @@ const AllCandidates = () => {
                     <TableRow>
                       <TableHead>Candidate Name</TableHead>
                       <TableHead>Job Applied For</TableHead>
-                      <TableHead>Application Date</TableHead>
+                      <TableHead>Applied Date</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -151,7 +188,7 @@ const AllCandidates = () => {
                       <TableRow key={app.id}>
                         <TableCell className="font-medium">{app.profiles?.full_name || "N/A"}</TableCell>
                         <TableCell>{app.jobs?.title || "N/A"}</TableCell>
-                        <TableCell>{new Date(app.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell>{new Date(app.applied_at).toLocaleDateString()}</TableCell>
                         <TableCell>
                           <Badge variant={app.status === "Hired" ? "default" : app.status === "Reviewed" ? "secondary" : "outline"}>
                             {app.status}

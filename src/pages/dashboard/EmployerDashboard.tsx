@@ -31,6 +31,7 @@ interface Candidate {
 const EmployerDashboard = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("overview"); // State to manage active tab
   const [jobs, setJobs] = useState<JobWithApplicants[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [stats, setStats] = useState({
@@ -207,7 +208,7 @@ const EmployerDashboard = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="overview" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="post-job">Post Job</TabsTrigger>
@@ -241,11 +242,9 @@ const EmployerDashboard = () => {
                       </div>
                     ))
                   )}
-                  <Button asChild className="w-full">
-                    <Link to="/jobs/post">
-                      <PlusCircle className="w-4 h-4 mr-2" />
-                      Post New Job
-                    </Link>
+                  <Button className="w-full" onClick={() => setActiveTab("post-job")}>
+                    <PlusCircle className="w-4 h-4 mr-2" />
+                    Post New Job
                   </Button>
                 </CardContent>
               </Card>
@@ -274,8 +273,8 @@ const EmployerDashboard = () => {
                       </div>
                     ))
                   )}
-                  <Button asChild variant="outline" className="w-full">
-                    <Link to="/candidates">View All Candidates</Link>
+                  <Button variant="outline" className="w-full" onClick={() => setActiveTab("all-candidates")}>
+                    View All Candidates
                   </Button>
                 </CardContent>
               </Card>
