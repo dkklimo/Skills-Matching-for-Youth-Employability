@@ -20,13 +20,20 @@ export const AdminAnalyticsChart = () => {
   }, []);
 
   const fetchAnalytics = async () => {
+    // First aggregate the data
+    try {
+      await supabase.rpc('aggregate_user_registrations');
+    } catch (error) {
+      console.error('Error aggregating data:', error);
+    }
+
     // Fetch registration trends
     const { data: analytics } = await supabase
       .from("user_analytics")
       .select("*")
       .order("date", { ascending: true });
 
-    if (analytics) {
+    if (analytics && analytics.length > 0) {
       const grouped = analytics.reduce((acc: any, curr) => {
         const date = curr.date;
         if (!acc[date]) {
@@ -36,6 +43,23 @@ export const AdminAnalyticsChart = () => {
         return acc;
       }, {});
       setRegistrationData(Object.values(grouped));
+    } else {
+      // Fallback to manual counting if no analytics data
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role, created_at");
+      
+      if (roles) {
+        const grouped = roles.reduce((acc: any, curr) => {
+          const date = new Date(curr.created_at).toISOString().split('T')[0];
+          if (!acc[date]) {
+            acc[date] = { date, students: 0, educators: 0, employers: 0 };
+          }
+          acc[date][curr.role] = (acc[date][curr.role] || 0) + 1;
+          return acc;
+        }, {});
+        setRegistrationData(Object.values(grouped));
+      }
     }
 
     // Fetch top skills

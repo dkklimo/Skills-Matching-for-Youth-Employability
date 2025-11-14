@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Search, MapPin, Briefcase, Clock, Bookmark } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +17,9 @@ interface Job {
   location: string;
   job_type: string;
   posted_at: string;
+  description?: string;
+  requirements?: string;
+  salary_range?: string;
   job_skills: Array<{ skill: { name: string } }>;
 }
 
@@ -42,6 +46,9 @@ const Jobs = () => {
           location,
           job_type,
           posted_at,
+          description,
+          requirements,
+          salary_range,
           company:companies(name),
           job_skills(skill:skills(name))
         `)
@@ -302,7 +309,65 @@ const Jobs = () => {
                   </div>
                   <div className="flex gap-2">
                     <Button onClick={() => handleApply(job.id)}>Apply Now</Button>
-                    <Button variant="outline">View Details</Button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline">View Details</Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>{job.title}</DialogTitle>
+                          <DialogDescription>{job.company?.name}</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="flex flex-wrap gap-4 text-sm">
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-4 h-4" />
+                              {job.location}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Briefcase className="w-4 h-4" />
+                              {job.job_type}
+                            </span>
+                            {job.salary_range && (
+                              <span className="font-semibold text-primary">
+                                {job.salary_range}
+                              </span>
+                            )}
+                          </div>
+                          
+                          {job.description && (
+                            <div>
+                              <h3 className="font-semibold mb-2">Description</h3>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{job.description}</p>
+                            </div>
+                          )}
+                          
+                          {job.requirements && (
+                            <div>
+                              <h3 className="font-semibold mb-2">Requirements</h3>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{job.requirements}</p>
+                            </div>
+                          )}
+                          
+                          <div>
+                            <h3 className="font-semibold mb-2">Required Skills</h3>
+                            <div className="flex flex-wrap gap-2">
+                              {job.job_skills?.map((js, idx) => (
+                                <Badge key={idx} variant="secondary">
+                                  {js.skill.name}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="flex gap-2 pt-4">
+                            <Button onClick={() => handleApply(job.id)} className="flex-1">
+                              Apply Now
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
               </CardContent>
