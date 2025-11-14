@@ -57,7 +57,7 @@ const SearchCandidates = () => {
     setCandidates([]);
 
     try {
-      let query = supabase.from("profiles").select(`
+      let query: any = supabase.from("profiles").select(`
         id,
         full_name,
         email,
@@ -73,10 +73,10 @@ const SearchCandidates = () => {
         query = query.ilike("location", `%${filters.location}%`);
       }
       if (filters.education) {
-        query = query.eq("education_level", filters.education as any);
+        query = query.eq("education_level", filters.education);
       }
       if (filters.experience) {
-        query = query.gte("experience_years", parseInt(filters.experience) as any);
+        query = query.gte("experience_years", parseInt(filters.experience));
       }
 
       const { data, error } = await query;

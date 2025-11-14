@@ -258,8 +258,8 @@ const EducatorDashboard = () => {
                   </div>
                 ))
               )}
-              <Button asChild className="w-full">
-                <Link to="/courses/new">Create New Course</Link>
+              <Button onClick={() => setCreateCourseOpen(true)} className="w-full">
+                Create New Course
               </Button>
             </CardContent>
           </Card>
@@ -273,28 +273,62 @@ const EducatorDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-3 gap-4">
-              <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-                <Link to="/upload/video">
-                  <Video className="w-6 h-6" />
-                  <span>Upload Video Lecture</span>
-                </Link>
+              <Button 
+                variant="outline" 
+                className="h-auto py-4 flex-col gap-2"
+                onClick={() => setUploadVideoOpen(true)}
+              >
+                <Video className="w-6 h-6" />
+                <span>Upload Video Lecture</span>
               </Button>
-              <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-                <Link to="/upload/material">
-                  <FileText className="w-6 h-6" />
-                  <span>Upload Materials</span>
-                </Link>
+              <Button 
+                variant="outline" 
+                className="h-auto py-4 flex-col gap-2"
+                onClick={() => setUploadMaterialsOpen(true)}
+              >
+                <FileText className="w-6 h-6" />
+                <span>Upload Materials</span>
               </Button>
-              <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-                <Link to="/skills/map">
-                  <Upload className="w-6 h-6" />
-                  <span>Map Skills to Jobs</span>
-                </Link>
+              <Button 
+                variant="outline" 
+                className="h-auto py-4 flex-col gap-2"
+                onClick={() => setMapSkillsOpen(true)}
+              >
+                <Upload className="w-6 h-6" />
+                <span>Map Skills to Jobs</span>
               </Button>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      <CreateCourseDialog
+        open={createCourseOpen}
+        onOpenChange={setCreateCourseOpen}
+        onSuccess={fetchDashboardData}
+        educatorId={user?.id || ""}
+      />
+
+      <UploadVideoLectureDialog
+        open={uploadVideoOpen}
+        onOpenChange={setUploadVideoOpen}
+        onSuccess={fetchDashboardData}
+        educatorId={user?.id || ""}
+      />
+
+      <UploadMaterialsDialog
+        open={uploadMaterialsOpen}
+        onOpenChange={setUploadMaterialsOpen}
+        onSuccess={fetchDashboardData}
+        educatorId={user?.id || ""}
+      />
+
+      <MapSkillsToJobsDialog
+        open={mapSkillsOpen}
+        onOpenChange={setMapSkillsOpen}
+        onSuccess={fetchDashboardData}
+        educatorId={user?.id || ""}
+      />
     </div>
   );
 };
