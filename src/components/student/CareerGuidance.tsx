@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,7 @@ interface CareerPath {
 }
 
 export function CareerGuidance({ userId }: CareerGuidanceProps) {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [userSkills, setUserSkills] = useState<string[]>([]);
   const [skillGaps, setSkillGaps] = useState<SkillGap[]>([]);
@@ -205,7 +207,7 @@ export function CareerGuidance({ userId }: CareerGuidanceProps) {
               Check out available courses to learn skills that employers are looking for!
             </AlertDescription>
           </Alert>
-          <Button variant="outline" className="w-full">
+          <Button variant="outline" className="w-full" onClick={() => navigate('/courses')}>
             Browse Available Courses
           </Button>
         </CardContent>
