@@ -164,13 +164,23 @@ export function ManageSkillsDialog({ userId, onUpdate }: { userId: string; onUpd
                     <SelectValue placeholder="Select a skill" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableSkills
-                      .filter((s) => !skills.find((existing) => existing.skill_id === s.id))
-                      .map((skill) => (
-                        <SelectItem key={skill.id} value={skill.id}>
-                          {skill.name} {skill.category && `(${skill.category})`}
-                        </SelectItem>
-                      ))}
+                    {availableSkills.length === 0 ? (
+                      <SelectItem value="no-skills" disabled>
+                        No skills available
+                      </SelectItem>
+                    ) : availableSkills.filter((s) => !skills.find((existing) => existing.skill_id === s.id)).length === 0 ? (
+                      <SelectItem value="all-added" disabled>
+                        All skills have been added
+                      </SelectItem>
+                    ) : (
+                      availableSkills
+                        .filter((s) => !skills.find((existing) => existing.skill_id === s.id))
+                        .map((skill) => (
+                          <SelectItem key={skill.id} value={skill.id}>
+                            {skill.name} {skill.category && `(${skill.category})`}
+                          </SelectItem>
+                        ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
