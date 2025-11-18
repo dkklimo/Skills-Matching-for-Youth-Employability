@@ -43,7 +43,7 @@ const Landing = () => {
       {/* Role Cards Section */}
       <section className="container mx-auto px-4 py-16">
         <h2 className="text-3xl font-bold text-center mb-12">Choose Your Path</h2>
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid md:grid-cols-4 gap-8 max-w-6xl mx-auto">
           <Card className="hover:shadow-lg transition-shadow border-2 hover:border-primary">
             <CardHeader>
               <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center mb-4">
@@ -109,6 +109,29 @@ const Landing = () => {
               </ul>
               <Button asChild className="w-full bg-primary hover:bg-primary/90">
                 <Link to="/auth/register?role=employer">Join as Employer</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow border-2 hover:border-destructive">
+            <CardHeader>
+              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-destructive to-destructive/80 flex items-center justify-center mb-4">
+                <GraduationCap className="w-6 h-6 text-white" />
+              </div>
+              <CardTitle>Admin</CardTitle>
+              <CardDescription>
+                Oversee platform operations and manage users
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm text-muted-foreground mb-4">
+                <li>• Manage users and roles</li>
+                <li>• Monitor platform analytics</li>
+                <li>• Oversee job postings</li>
+                <li>• Review educator content</li>
+              </ul>
+              <Button asChild className="w-full" variant="destructive">
+                <Link to="/auth/admin-login">Admin Login</Link>
               </Button>
             </CardContent>
           </Card>

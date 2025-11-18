@@ -13,6 +13,7 @@ import { ManageSkillsDialog } from "@/components/student/ManageSkillsDialog";
 import { VideoIntroUpload } from "@/components/student/VideoIntroUpload";
 import { ResumeUpload } from "@/components/student/ResumeUpload";
 import { CareerGuidance } from "@/components/student/CareerGuidance";
+import { CertificatesView } from "@/components/student/CertificatesView";
 
 interface Job {
   id: string;
@@ -97,21 +98,33 @@ const StudentDashboard = () => {
         setProfile(profileData);
       }
 
+      // Fetch completed courses (certificates) count
+      const { count: certificatesCount } = await supabase
+        .from('course_enrollments')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user?.id)
+        .not('completed_at', 'is', null);
+
       // Calculate profile strength based on available data
+      // Skills: 30% max (3 points per skill, max 10 skills)
+      // Video intro: 20%
+      // Resume: 20%
+      // Courses enrolled: 15% (3 points per course, max 5 courses)
+      // Certificates: 15% (3 points per certificate, max 5)
       const profileStrength = Math.min(
         100,
-        (skillsData?.length || 0) * 10 + 
-        (appliedCount || 0) * 5 + 
-        (coursesCount || 0) * 10 +
+        Math.min(30, (skillsData?.length || 0) * 3) + 
         (profileData?.video_intro_url ? 20 : 0) +
-        (profileData?.resume_url ? 20 : 0)
+        (profileData?.resume_url ? 20 : 0) +
+        Math.min(15, (coursesCount || 0) * 3) +
+        Math.min(15, (certificatesCount || 0) * 3)
       );
 
       setStats({
         appliedJobs: appliedCount || 0,
         profileStrength,
         courses: coursesCount || 0,
-        certificates: 0, // TODO: Implement certificates
+        certificates: certificatesCount || 0,
       });
 
       // Calculate match percentage for jobs based on skills
@@ -201,11 +214,12 @@ const StudentDashboard = () => {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="skills">Skills</TabsTrigger>
             <TabsTrigger value="video">Video Intro</TabsTrigger>
             <TabsTrigger value="resume">Resume</TabsTrigger>
+            <TabsTrigger value="certificates">Certificates</TabsTrigger>
             <TabsTrigger value="career">Career Guidance</TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="space-y-6 mt-6">
@@ -311,6 +325,22 @@ const StudentDashboard = () => {
               </CardHeader>
               <CardContent>
                 <ResumeUpload userId={user?.id} resumeUrl={profile?.resume_url} resumeUpdatedAt={profile?.resume_updated_at} onUpdate={fetchDashboardData} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="certificates" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="w-5 h-5" />
+                  My Certificates
+                </CardTitle>
+                <CardDescription>
+                  View your earned certificates from completed courses
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CertificatesView userId={user?.id || ''} />
               </CardContent>
             </Card>
           </TabsContent>
