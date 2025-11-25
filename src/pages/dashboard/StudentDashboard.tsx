@@ -245,10 +245,13 @@ const StudentDashboard = () => {
                           <h4 className="font-medium">{job.title}</h4>
                           <p className="text-sm text-muted-foreground">{job.company?.name}</p>
                         </div>
-                        <div className="text-right">
+                        <div className="flex items-center gap-2">
                           <Badge variant={job.match >= 80 ? "default" : "secondary"}>
                             {job.match}% match
                           </Badge>
+                          <Button size="sm" asChild>
+                            <Link to="/jobs">Apply Now</Link>
+                          </Button>
                         </div>
                       </div>
                     ))
