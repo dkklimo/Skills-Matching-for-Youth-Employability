@@ -51,11 +51,11 @@ const AdminDashboard = () => {
   }, [user, loading, isAdmin, navigate, toast]);
 
   useEffect(() => {
-    if (user && isAdmin() && roles.length > 0) {
+    if (user && isAdmin()) {
       fetchUsers();
       fetchStats();
     }
-  }, [user, isAdmin,roles]);
+  }, [user, isAdmin]);
 
   const fetchUsers = async () => {
     try {
