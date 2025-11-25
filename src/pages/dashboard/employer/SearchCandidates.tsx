@@ -64,7 +64,7 @@ const SearchCandidates = () => {
         experience_years,
         location,
         education_level,
-        student_skills!user_id(skill_id, skills!skill_id(name)),
+        student_skills(skill_id, skills(name)),
         resume_url,
         video_intro_url
       `);
