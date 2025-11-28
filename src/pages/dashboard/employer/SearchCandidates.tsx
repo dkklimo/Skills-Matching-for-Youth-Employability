@@ -14,9 +14,6 @@ interface Candidate {
   id: string;
   full_name: string;
   email: string;
-  experience_years: number;
-  location: string;
-  education_level: string;
   skills: string[];
   resume_url: string | null;
   video_intro_url: string | null;
@@ -28,9 +25,6 @@ const SearchCandidates = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [filters, setFilters] = useState({
     skills: "",
-    experience: "",
-    location: "",
-    education: "",
   });
   const [availableSkills, setAvailableSkills] = useState<{ id: string; name: string }[]>([]);
 
@@ -61,22 +55,9 @@ const SearchCandidates = () => {
         id,
         full_name,
         email,
-        experience_years,
-        location,
-        education_level,
         resume_url,
         video_intro_url
       `);
-
-      if (filters.location) {
-        query = query.ilike("location", `%${filters.location}%`);
-      }
-      if (filters.education) {
-        query = query.eq("education_level", filters.education);
-      }
-      if (filters.experience) {
-        query = query.gte("experience_years", parseInt(filters.experience));
-      }
 
       const { data, error } = await query;
 
@@ -101,9 +82,6 @@ const SearchCandidates = () => {
         id: profile.id,
         full_name: profile.full_name,
         email: profile.email,
-        experience_years: profile.experience_years,
-        location: profile.location,
-        education_level: profile.education_level,
         skills: userSkillsMap.get(profile.id) || [],
         resume_url: profile.resume_url,
         video_intro_url: profile.video_intro_url,
@@ -155,40 +133,6 @@ const SearchCandidates = () => {
                   onChange={(e) => handleFilterChange("skills", e.target.value)}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="experience">Min. Experience (years)</Label>
-                <Input
-                  id="experience"
-                  type="number"
-                  placeholder="e.g., 2"
-                  value={filters.experience}
-                  onChange={(e) => handleFilterChange("experience", e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  placeholder="e.g., Remote, London"
-                  value={filters.location}
-                  onChange={(e) => handleFilterChange("location", e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="education">Education Level</Label>
-                <Select value={filters.education} onValueChange={(value) => handleFilterChange("education", value)}>
-                  <SelectTrigger id="education">
-                    <SelectValue placeholder="Select education" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="High School">High School</SelectItem>
-                    <SelectItem value="Associate Degree">Associate Degree</SelectItem>
-                    <SelectItem value="Bachelor's Degree">Bachelor's Degree</SelectItem>
-                    <SelectItem value="Master's Degree">Master's Degree</SelectItem>
-                    <SelectItem value="PhD">PhD</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Search className="h-4 w-4 mr-2" />}
@@ -218,15 +162,6 @@ const SearchCandidates = () => {
                     <CardContent className="space-y-2">
                       <p className="text-sm text-muted-foreground flex items-center gap-1">
                         <Mail className="h-4 w-4" /> {candidate.email}
-                      </p>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <Briefcase className="h-4 w-4" /> {candidate.experience_years} years experience
-                      </p>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <MapPin className="h-4 w-4" /> {candidate.location}
-                      </p>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <GraduationCap className="h-4 w-4" /> {candidate.education_level}
                       </p>
                       <div className="flex flex-wrap gap-2 mt-2">
                         {candidate.skills.map((skill, idx) => (
