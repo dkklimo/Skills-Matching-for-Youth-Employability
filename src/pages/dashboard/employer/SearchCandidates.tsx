@@ -64,7 +64,6 @@ const SearchCandidates = () => {
         experience_years,
         location,
         education_level,
-        student_skills(skill_id, skills(name)),
         resume_url,
         video_intro_url
       `);
@@ -83,6 +82,21 @@ const SearchCandidates = () => {
 
       if (error) throw error;
 
+      // Fetch student skills separately
+      const { data: studentSkillsData } = await supabase
+        .from("student_skills")
+        .select("user_id, skills(name)");
+
+      // Create a map of user skills
+      const userSkillsMap = new Map<string, string[]>();
+      studentSkillsData?.forEach((ss: any) => {
+        const skills = userSkillsMap.get(ss.user_id) || [];
+        if (ss.skills?.name) {
+          skills.push(ss.skills.name);
+        }
+        userSkillsMap.set(ss.user_id, skills);
+      });
+
       let filteredCandidates: Candidate[] = data?.map((profile: any) => ({
         id: profile.id,
         full_name: profile.full_name,
@@ -90,7 +104,7 @@ const SearchCandidates = () => {
         experience_years: profile.experience_years,
         location: profile.location,
         education_level: profile.education_level,
-        skills: profile.student_skills.map((ss: any) => ss.skills?.name).filter(Boolean),
+        skills: userSkillsMap.get(profile.id) || [],
         resume_url: profile.resume_url,
         video_intro_url: profile.video_intro_url,
       })) || [];
