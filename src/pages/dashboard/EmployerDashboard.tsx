@@ -12,6 +12,7 @@ import PostNewJob from "@/pages/dashboard/employer/PostNewJob";
 import SearchCandidates from "@/pages/dashboard/employer/SearchCandidates";
 import AllCandidates from "@/pages/dashboard/employer/AllCandidates";
 import UpdateCompanyProfile from "@/pages/dashboard/employer/UpdateCompanyProfile";
+import ShortlistedCandidates from "@/pages/dashboard/employer/ShortlistedCandidates";
 
 interface JobWithApplicants {
   id: string;
@@ -209,11 +210,12 @@ const EmployerDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="post-job">Post Job</TabsTrigger>
             <TabsTrigger value="search-candidates">Search Candidates</TabsTrigger>
             <TabsTrigger value="all-candidates">All Candidates</TabsTrigger>
+            <TabsTrigger value="shortlisted-candidates">Shortlisted</TabsTrigger>
             <TabsTrigger value="company-profile">Company Profile</TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="space-y-6 mt-6">
@@ -291,6 +293,9 @@ const EmployerDashboard = () => {
           </TabsContent>
           <TabsContent value="company-profile" className="mt-6">
             <UpdateCompanyProfile />
+          </TabsContent>
+          <TabsContent value="shortlisted-candidates" className="mt-6">
+            <ShortlistedCandidates />
           </TabsContent>
         </Tabs>
       </div>

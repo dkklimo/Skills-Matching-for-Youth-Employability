@@ -400,28 +400,64 @@ export type Database = {
         }
         Relationships: []
       }
-      user_roles: {
-        Row: {
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
+          user_roles: {
+            Row: {
+              created_at: string
+              id: string
+              role: Database["public"]["Enums"]["app_role"]
+              user_id: string
+            }
+            Insert: {
+              created_at?: string
+              id?: string
+              role: Database["public"]["Enums"]["app_role"]
+              user_id: string
+            }
+            Update: {
+              created_at?: string
+              id?: string
+              role?: Database["public"]["Enums"]["app_role"]
+              user_id?: string
+            }
+            Relationships: []
+          }
+          shortlists: {
+            Row: {
+              id: string;
+              created_at: string;
+              employer_id: string;
+              candidate_id: string;
+            };
+            Insert: {
+              id?: string;
+              created_at?: string;
+              employer_id: string;
+              candidate_id: string;
+            };
+            Update: {
+              id?: string;
+              created_at?: string;
+              employer_id?: string;
+              candidate_id?: string;
+            };
+            Relationships: [
+              {
+                foreignKeyName: "shortlists_employer_id_fkey",
+                columns: ["employer_id"],
+                isOneToOne: false,
+                referencedRelation: "profiles",
+                referencedColumns: ["id"],
+              },
+              {
+                foreignKeyName: "shortlists_candidate_id_fkey",
+                columns: ["candidate_id"],
+                isOneToOne: false,
+                referencedRelation: "profiles",
+                referencedColumns: ["id"],
+              }
+            ];
+          };
         }
-        Insert: {
-          created_at?: string
-          id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
-      }
-    }
     Views: {
       [_ in never]: never
     }

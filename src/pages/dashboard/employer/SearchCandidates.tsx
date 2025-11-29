@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Search, User, Briefcase, MapPin, GraduationCap, Brain, Mail, Eye, Check, FileText, Video } from "lucide-react";
 import { Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useAuth } from "@/hooks/useAuth"; // Import useAuth
 
 interface Candidate {
   id: string;
@@ -21,6 +23,8 @@ interface Candidate {
 
 const SearchCandidates = () => {
   const { toast } = useToast();
+  const navigate = useNavigate(); // Initialize useNavigate
+  const { user } = useAuth(); // Get current user from auth hook
   const [loading, setLoading] = useState(false);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [filters, setFilters] = useState({
@@ -111,6 +115,51 @@ const SearchCandidates = () => {
     }
   };
 
+  const handleShortlistCandidate = async (candidateId: string, candidateName: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to shortlist candidates.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from("shortlists")
+        .insert([{ employer_id: user.id, candidate_id: candidateId }]);
+
+      if (error) {
+        if (error.code === '23505') { // Unique violation error code
+          toast({
+            title: "Already Shortlisted",
+            description: `${candidateName} is already in your shortlist.`,
+            variant: "default", // or "info" if you have one
+          });
+        } else {
+          throw error;
+        }
+      } else {
+        toast({
+          title: "Candidate Shortlisted",
+          description: `${candidateName} has been added to your shortlist.`,
+        });
+      }
+    } catch (error) {
+      console.error("Error shortlisting candidate:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to shortlist candidate.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="max-w-4xl mx-auto">
@@ -154,7 +203,7 @@ const SearchCandidates = () => {
                   <Card key={candidate.id} className="p-4">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-lg font-bold">{candidate.full_name}</CardTitle>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/candidate/${candidate.id}`)}>
                         <Eye className="h-4 w-4 mr-2" />
                         View Profile
                       </Button>
@@ -181,9 +230,9 @@ const SearchCandidates = () => {
                             <Video className="h-4 w-4 mr-2" /> Video Intro
                           </Button>
                         )}
-                        <Button size="sm">
-                          <Check className="h-4 w-4 mr-2" /> Shortlist
-                        </Button>
+                          <Button size="sm" onClick={() => handleShortlistCandidate(candidate.id, candidate.full_name)}>
+                            <Check className="h-4 w-4 mr-2" /> Shortlist
+                          </Button>
                       </div>
                     </CardContent>
                   </Card>
