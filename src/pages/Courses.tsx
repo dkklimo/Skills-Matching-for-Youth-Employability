@@ -40,8 +40,7 @@ const Courses = () => {
           thumbnail_url,
           rating,
           total_students,
-          educator_id,
-          profiles!courses_educator_id_fkey(full_name)
+          educator_id
         `)
         .eq("status", "published")
         .order("created_at", { ascending: false });
@@ -50,15 +49,31 @@ const Courses = () => {
         query = query.ilike("title", `%${searchQuery}%`);
       }
 
-      const { data, error } = await query;
+      const { data: coursesData, error } = await query;
 
       if (error) throw error;
       
-      // Transform data to match Course interface
-      const transformedData = data?.map((course: any) => ({
-        ...course,
-        educator: course.profiles || { full_name: "Unknown" }
-      })) || [];
+      if (!coursesData || coursesData.length === 0) {
+        setCourses([]);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch educator profiles separately
+      const educatorIds = [...new Set(coursesData.map(c => c.educator_id))];
+      const { data: educatorsData } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", educatorIds);
+
+      // Map educator names to courses
+      const transformedData = coursesData.map((course: any) => {
+        const educator = educatorsData?.find(e => e.id === course.educator_id);
+        return {
+          ...course,
+          educator: { full_name: educator?.full_name || "Unknown" }
+        };
+      });
       
       setCourses(transformedData);
     } catch (error) {

@@ -127,7 +127,7 @@ const SearchCandidates = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("shortlists")
         .insert([{ employer_id: user.id, candidate_id: candidateId }]);
 

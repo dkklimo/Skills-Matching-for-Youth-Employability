@@ -35,30 +35,39 @@ const ShortlistedCandidates = () => {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data: shortlistData, error: shortlistError } = await (supabase as any)
         .from("shortlists")
-        .select(`
-          id:shortlist_id,
-          profiles(
-            id,
-            full_name,
-            email,
-            resume_url,
-            video_intro_url
-          )
-        `)
+        .select("shortlist_id, candidate_id")
         .eq("employer_id", user.id);
 
-      if (error) throw error;
+      if (shortlistError) throw shortlistError;
 
-      const candidates = data?.map((item: any) => ({
-        id: item.profiles.id,
-        full_name: item.profiles.full_name,
-        email: item.profiles.email,
-        resume_url: item.profiles.resume_url,
-        video_intro_url: item.profiles.video_intro_url,
-        shortlist_id: item.id, // The ID of the shortlist entry
-      })) || [];
+      if (!shortlistData || shortlistData.length === 0) {
+        setShortlistedCandidates([]);
+        setLoading(false);
+        return;
+      }
+
+      const candidateIds = shortlistData.map((s: any) => s.candidate_id);
+      
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, resume_url, video_intro_url")
+        .in("id", candidateIds);
+
+      if (profilesError) throw profilesError;
+
+      const candidates = shortlistData.map((shortlist: any) => {
+        const profile = profilesData?.find(p => p.id === shortlist.candidate_id);
+        return {
+          id: shortlist.candidate_id,
+          full_name: profile?.full_name || "Unknown",
+          email: profile?.email || "",
+          resume_url: profile?.resume_url || null,
+          video_intro_url: profile?.video_intro_url || null,
+          shortlist_id: shortlist.shortlist_id,
+        };
+      });
 
       setShortlistedCandidates(candidates);
     } catch (error) {
@@ -76,7 +85,7 @@ const ShortlistedCandidates = () => {
   const handleRemoveFromShortlist = async (shortlistId: string) => {
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("shortlists")
         .delete()
         .eq("shortlist_id", shortlistId);
